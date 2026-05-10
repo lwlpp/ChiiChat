@@ -9,7 +9,7 @@
 - **对话**：多会话管理，流式输出（ReadableStream / SSE 解析由 `messageHandler` 处理）
 - **展示**：markdown-it + highlight.js
 - **附件**：拖拽或选择；预览（Office 使用 @vue-office；PDF 走浏览器内置查看器）
-- **登录（演示）**：双 Token 流程在前端用 **localStorage 模拟持久化**；`axios` 实例带拦截器，401 时尝试刷新并重试一次
+- **登录（演示）**：双 Token 流程在前端用 localStorage 模拟持久化；`axios` 实例带拦截器，401 时尝试刷新并重试一次
 - **主题与设置**：Element Plus + Pinia 持久化
 
 ![界面1](public/chat01.png)
@@ -20,7 +20,7 @@
 
 | 项 | 说明 |
 |----|------|
-| 运行时 | Vue 3、**TypeScript** |
+| 运行时 | Vue 3、TypeScript |
 | 构建 | Vite 6、`vue-tsc` 类型检查 |
 | 路由 / 状态 | Vue Router、Pinia + pinia-plugin-persistedstate |
 | UI | Element Plus、SCSS |
@@ -80,15 +80,6 @@ cp .env.example .env
 3. **演示登录**  
    任意 **非空用户名 + 非空密码** 即可通过当前 mock。数据保存在浏览器 `localStorage`（键名见 `mock-db.ts`）。
 
-## 脚本
-
-| 命令 | 说明 |
-|------|------|
-| `npm run dev` | 开发服务器 |
-| `npm run build` | 生产构建（含 `vue-tsc` 类型检查） |
-| `npm run typecheck` | 仅运行 TypeScript / Vue 类型检查 |
-| `npm run preview` | 预览构建产物 |
-| `npm run lint` | ESLint |
 
 ## 许可证
 
