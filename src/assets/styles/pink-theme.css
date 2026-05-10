@@ -1,0 +1,12 @@
+/**
+ * 覆盖 Element Plus 默认蓝色主色（按需加载的组件样式可能晚于 variables.scss）
+ */
+:root {
+  --el-color-primary: #dd6096 !important;
+  --el-color-primary-light-3: #e887b0 !important;
+  --el-color-primary-light-5: #f0b3cb !important;
+  --el-color-primary-light-7: #f9dfea !important;
+  --el-color-primary-light-8: #fcecf3 !important;
+  --el-color-primary-light-9: #fef6f9 !important;
+  --el-color-primary-dark-2: #c44e82 !important;
+}

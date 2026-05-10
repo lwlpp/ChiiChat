@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office文档预览测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .download-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 10px 20px;
+            background: #3f7af1;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .download-link:hover {
+            background: #3266d6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Office文档预览测试</h1>
+    
+    <div class="test-section">
+        <h2>测试说明</h2>
+        <p>这个页面用于测试Office文档预览功能。请按照以下步骤操作：</p>
+        <ol>
+            <li>下载下面的测试文档</li>
+            <li>在聊天界面中上传这些文档</li>
+            <li>点击文档进行预览</li>
+            <li>检查预览效果是否正常</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试文档</h2>
+        <p>点击下面的链接下载测试文档：</p>
+        
+        <h3>Word文档测试</h3>
+        <a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,UEsDBBQAAAAIAA==" class="download-link">下载Word测试文档</a>
+        
+        <h3>Excel表格测试</h3>
+        <a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,UEsDBBQAAAAIAA==" class="download-link">下载Excel测试文档</a>
+        
+        <h3>PowerPoint演示文稿测试</h3>
+        <a href="data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,UEsDBBQAAAAIAA==" class="download-link">下载PowerPoint测试文档</a>
+        
+        <h3>PDF文档测试</h3>
+        <a href="data:application/pdf;base64,UEsDBBQAAAAIAA==" class="download-link">下载PDF测试文档</a>
+    </div>
+    
+    <div class="test-section">
+        <h2>功能验证清单</h2>
+        <ul>
+            <li>✅ Word文档预览是否正常显示</li>
+            <li>✅ Excel表格预览是否正常显示</li>
+            <li>✅ PowerPoint演示文稿预览是否正常显示</li>
+            <li>✅ PDF文档预览是否正常显示</li>
+            <li>✅ 预览窗口是否可以正常关闭</li>
+            <li>✅ 响应式设计是否适配移动端</li>
+        </ul>
+    </div>
+</body>
+</html>
+
