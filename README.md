@@ -2,6 +2,8 @@
 
 基于 **Vue 3** 的对话前端：多会话、流式/非流式回复、Markdown 与代码高亮、附件上传与在线预览（图片 / PDF / 常见 Office 格式）。大模型请求与业务 HTTP 客户端分离，便于对接自有后端。
 
+![首页](public/home.png)
+
 ## 功能
 
 - **对话**：多会话管理，流式输出（ReadableStream / SSE 解析由 `messageHandler` 处理）
@@ -9,6 +11,10 @@
 - **附件**：拖拽或选择；预览（Office 使用 @vue-office；PDF 走浏览器内置查看器）
 - **登录（演示）**：双 Token 流程在前端用 **localStorage 模拟持久化**；`axios` 实例带拦截器，401 时尝试刷新并重试一次
 - **主题与设置**：Element Plus + Pinia 持久化
+
+![界面1](public/chat01.png)
+![界面2](public/chat02.png)
+![界面3](public/chat03.png)
 
 ## 技术栈
 
