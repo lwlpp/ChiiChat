@@ -1,11 +1,11 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import type { ChatMessage, Conversation } from '@/types/chat'
 
 export const useChatStore = defineStore(
   'llm-chat',
   () => {
-    // 所有对话列表
-    const conversations = ref([
+    const conversations = ref<Conversation[]>([
       {
         id: '1',
         title: '日常问候',
@@ -14,23 +14,17 @@ export const useChatStore = defineStore(
       },
     ])
 
-    // 当前选中的对话 ID
     const currentConversationId = ref('1')
-
-    // 加载状态
     const isLoading = ref(false)
 
-    // 获取当前对话
     const currentConversation = computed(() => {
       return conversations.value.find((conv) => conv.id === currentConversationId.value)
     })
 
-    // 获取当前对话的消息
     const currentMessages = computed(() => currentConversation.value?.messages || [])
 
-    // 创建新对话
     const createConversation = () => {
-      const newConversation = {
+      const newConversation: Conversation = {
         id: Date.now().toString(),
         title: '日常问候',
         messages: [],
@@ -40,28 +34,40 @@ export const useChatStore = defineStore(
       currentConversationId.value = newConversation.id
     }
 
-    // 切换对话
-    const switchConversation = (conversationId) => {
+    const switchConversation = (conversationId: string) => {
       currentConversationId.value = conversationId
     }
 
-    // 添加消息到当前对话
-    const addMessage = (message) => {
+    const addMessage = (
+      message: Omit<ChatMessage, 'id' | 'timestamp'> & Partial<Pick<ChatMessage, 'id'>>,
+    ) => {
       if (currentConversation.value) {
-        currentConversation.value.messages.push({
-          id: Date.now(),
+        const row: ChatMessage = {
+          id: message.id ?? Date.now(),
           timestamp: new Date().toISOString(),
-          ...message,
-        })
+          role: message.role,
+          content: message.content,
+          reasoning_content: message.reasoning_content,
+          files: message.files,
+          completion_tokens: message.completion_tokens,
+          speed: message.speed,
+          loading: message.loading,
+        }
+        currentConversation.value.messages.push(row)
       }
     }
 
-    const setIsLoading = (value) => {
+    const setIsLoading = (value: boolean) => {
       isLoading.value = value
     }
 
-    const updateLastMessage = (content, reasoning_content, completion_tokens, speed) => {
-      if (currentConversation.value?.messages.length > 0) {
+    const updateLastMessage = (
+      content: string,
+      reasoning_content: string,
+      completion_tokens: number,
+      speed: number | string,
+    ) => {
+      if (currentConversation.value?.messages.length) {
         const lastMessage =
           currentConversation.value.messages[currentConversation.value.messages.length - 1]
         lastMessage.content = content
@@ -72,33 +78,28 @@ export const useChatStore = defineStore(
     }
 
     const getLastMessage = () => {
-      if (currentConversation.value?.messages.length > 0) {
+      if (currentConversation.value?.messages.length) {
         return currentConversation.value.messages[currentConversation.value.messages.length - 1]
       }
       return null
     }
 
-    // 更新对话标题
-    const updateConversationTitle = (conversationId, newTitle) => {
+    const updateConversationTitle = (conversationId: string, newTitle: string) => {
       const conversation = conversations.value.find((c) => c.id === conversationId)
       if (conversation) {
         conversation.title = newTitle
       }
     }
 
-    // 删除对话
-    const deleteConversation = (conversationId) => {
+    const deleteConversation = (conversationId: string) => {
       const index = conversations.value.findIndex((c) => c.id === conversationId)
       if (index !== -1) {
         conversations.value.splice(index, 1)
 
-        // 如果删除后没有对话了，创建一个新对话
         if (conversations.value.length === 0) {
           createConversation()
-        }
-        // 如果删除的是当前对话，切换到第一个对话
-        else if (conversationId === currentConversationId.value) {
-          currentConversationId.value = conversations.value[0].id
+        } else if (conversationId === currentConversationId.value) {
+          currentConversationId.value = conversations.value[0]!.id
         }
       }
     }

@@ -1,17 +1,15 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
-// import { ElMessage } from 'element-plus'
 import { useChatStore } from '@/stores/chat'
 import { WarningFilled } from '@element-plus/icons-vue'
 
 const chatStore = useChatStore()
 const dialogVisible = ref(false)
 const inputTitle = ref('')
-const currentConversationId = ref(null)
-const dialogType = ref('edit') // 新增：区分对话框类型（edit/delete）
+const currentConversationId = ref<string | null>(null)
+const dialogType = ref<'edit' | 'delete'>('edit')
 
-// 打开对话框
-const openDialog = (conversationId, type = 'edit') => {
+const openDialog = (conversationId: string, type: 'edit' | 'delete' = 'edit') => {
   currentConversationId.value = conversationId
   dialogType.value = type
 
@@ -23,30 +21,27 @@ const openDialog = (conversationId, type = 'edit') => {
   dialogVisible.value = true
 }
 
-// 确认操作
 const handleConfirm = () => {
+  const cid = currentConversationId.value
+  if (!cid) return
+
   if (dialogType.value === 'edit') {
     if (!inputTitle.value.trim()) {
-      // ElMessage.warning('标题不能为空')
       return
     }
-    chatStore.updateConversationTitle(currentConversationId.value, inputTitle.value.trim())
-    // ElMessage.success('修改成功')
+    chatStore.updateConversationTitle(cid, inputTitle.value.trim())
   } else {
-    chatStore.deleteConversation(currentConversationId.value)
-    // ElMessage.success('删除成功')
+    chatStore.deleteConversation(cid)
   }
   dialogVisible.value = false
   inputTitle.value = ''
 }
 
-// 取消操作
 const handleCancel = () => {
   dialogVisible.value = false
   inputTitle.value = ''
 }
 
-// 导出方法供父组件调用
 defineExpose({
   openDialog,
 })

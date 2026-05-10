@@ -1,17 +1,21 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { loginApi, refreshApi } from '@/lib/auth-api'
+import { loginApi, refreshApi, type AuthUser, type LoginCredentials } from '@/lib/auth-api'
 import { revokeRefreshSession } from '@/lib/mock-db'
 
-/** Session store: access + refresh tokens, user profile, silent refresh before protected routes. */
+export interface TokenBundle {
+  accessToken: string
+  refreshToken?: string
+  expiresIn?: number
+}
+
 export const useAuthStore = defineStore(
   'auth',
   () => {
     const accessToken = ref('')
     const refreshToken = ref('')
-    /** Access token expiry (epoch ms). */
     const accessExpiresAt = ref(0)
-    const user = ref(null)
+    const user = ref<AuthUser | null>(null)
 
     const isAuthenticated = computed(() => Boolean(refreshToken.value))
 
@@ -25,14 +29,14 @@ export const useAuthStore = defineStore(
       user.value = null
     }
 
-    function applyTokenBundle(data) {
+    function applyTokenBundle(data: TokenBundle) {
       accessToken.value = data.accessToken
       if (data.refreshToken) refreshToken.value = data.refreshToken
       const sec = data.expiresIn ?? 900
       accessExpiresAt.value = Date.now() + sec * 1000
     }
 
-    async function login(credentials) {
+    async function login(credentials: LoginCredentials) {
       const data = await loginApi(credentials)
       applyTokenBundle(data)
       user.value = data.user ?? null
@@ -41,7 +45,7 @@ export const useAuthStore = defineStore(
     async function refreshSession() {
       const rt = refreshToken.value
       if (!rt) {
-        const e = new Error('no refresh')
+        const e = new Error('no refresh') as Error & { code?: string }
         e.code = 'NO_REFRESH'
         throw e
       }
@@ -49,7 +53,6 @@ export const useAuthStore = defineStore(
       applyTokenBundle(data)
     }
 
-    /** Proactively refresh if access token is missing or near expiry. */
     async function ensureSession() {
       if (!refreshToken.value) return
       const skew = 15_000

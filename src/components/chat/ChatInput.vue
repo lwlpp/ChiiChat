@@ -1,25 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { Paperclip } from '@element-plus/icons-vue'
 import MediaInput from './MediaInput.vue'
 
-// 输入框的值，使用 ref 实现响应式
 const inputValue = ref('')
-const mediaInput = ref(null) // 多媒体输入组件引用
+const mediaInput = ref<InstanceType<typeof MediaInput> | null>(null)
 
 const dragDepth = ref(0)
 const isDragOver = ref(false)
 
-// 定义组件的 props，接收 loading 状态
-const props = defineProps({
-  loading: {
-    type: Boolean, // loading 的类型为布尔值
-    default: false, // 默认值为 false
-  },
-})
+const props = defineProps<{
+  loading?: boolean
+}>()
 
-// 定义组件的事件，这里声明了一个 send 事件
-const emit = defineEmits(['send'])
+const emit = defineEmits<{
+  send: [payload: { text: string; files: { name: string; url: string; type: string; size: number }[] }]
+}>()
 
 // 处理发送消息的方法
 const handleSend = () => {
@@ -48,18 +44,18 @@ const handleSend = () => {
 }
 
 // 处理换行的方法（Shift + Enter）
-const handleNewline = (e) => {
+const handleNewline = (e: KeyboardEvent) => {
   e.preventDefault() // 阻止默认的 Enter 发送行为
   inputValue.value += '\n' // 在当前位置添加换行符
 }
 
 // 处理多媒体上传成功
-const onUploadSuccess = (data) => {
+const onUploadSuccess = (data: unknown) => {
   console.log('文件上传成功:', data)
 }
 
 // 处理多媒体上传失败
-const onUploadError = (data) => {
+const onUploadError = (data: unknown) => {
   console.error('文件上传失败:', data)
 }
 
@@ -67,14 +63,14 @@ const onAttachClick = () => {
   mediaInput.value?.openFilePicker()
 }
 
-const onDragEnter = (e) => {
+const onDragEnter = (e: DragEvent) => {
   if (!e.dataTransfer?.types?.includes('Files')) return
   e.preventDefault()
   dragDepth.value += 1
   isDragOver.value = true
 }
 
-const onDragOver = (e) => {
+const onDragOver = (e: DragEvent) => {
   if (!e.dataTransfer?.types?.includes('Files')) return
   e.preventDefault()
   try {
@@ -84,7 +80,7 @@ const onDragOver = (e) => {
   }
 }
 
-const onDragLeave = (e) => {
+const onDragLeave = (e: DragEvent) => {
   e.preventDefault()
   dragDepth.value -= 1
   if (dragDepth.value <= 0) {
@@ -93,7 +89,7 @@ const onDragLeave = (e) => {
   }
 }
 
-const onDrop = (e) => {
+const onDrop = (e: DragEvent) => {
   e.preventDefault()
   dragDepth.value = 0
   isDragOver.value = false

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useSettingStore, modelOptions } from '@/stores/setting'
 import { QuestionFilled } from '@element-plus/icons-vue'

@@ -1,12 +1,34 @@
-/**
- * In-browser persistence simulating relational rows (users, audits, refresh sessions).
- * Stored under localStorage; safe to remove when a real backend + DB is used.
- */
-
 const STORAGE_KEY = 'chiichat-mock-db'
 
-/** @returns {{ users: Array, loginAudits: Array, refreshSessions: Array }} */
-function defaultDb() {
+export interface MockUser {
+  id: number
+  username: string
+  createdAt: number
+}
+
+export interface MockLoginAudit {
+  id: number
+  userId: number
+  loginAt: number
+  clientHint: string
+}
+
+export interface MockRefreshSession {
+  id: number
+  userId: number
+  token: string
+  createdAt: number
+  revoked: boolean
+  revokedAt?: number
+}
+
+interface MockDb {
+  users: MockUser[]
+  loginAudits: MockLoginAudit[]
+  refreshSessions: MockRefreshSession[]
+}
+
+function defaultDb(): MockDb {
   return {
     users: [],
     loginAudits: [],
@@ -14,12 +36,12 @@ function defaultDb() {
   }
 }
 
-export function loadDb() {
+export function loadDb(): MockDb {
   if (typeof localStorage === 'undefined') return defaultDb()
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultDb()
-    const parsed = JSON.parse(raw)
+    const parsed = JSON.parse(raw) as Partial<MockDb>
     return {
       ...defaultDb(),
       ...parsed,
@@ -32,12 +54,12 @@ export function loadDb() {
   }
 }
 
-function saveDb(db) {
+function saveDb(db: MockDb) {
   if (typeof localStorage === 'undefined') return
   localStorage.setItem(STORAGE_KEY, JSON.stringify(db))
 }
 
-export function ensureUser(username) {
+export function ensureUser(username: string): MockUser {
   const db = loadDb()
   let user = db.users.find((u) => u.username === username)
   if (!user) {
@@ -54,7 +76,7 @@ export function ensureUser(username) {
   return user
 }
 
-export function appendLoginAudit(userId, hint = 'web') {
+export function appendLoginAudit(userId: number, hint = 'web') {
   const db = loadDb()
   const id =
     db.loginAudits.length === 0
@@ -69,10 +91,12 @@ export function appendLoginAudit(userId, hint = 'web') {
   saveDb(db)
 }
 
-export function saveRefreshSession(userId, refreshToken) {
+export function saveRefreshSession(userId: number, refreshToken: string) {
   const db = loadDb()
   db.refreshSessions.push({
-    id: db.refreshSessions.length ? Math.max(...db.refreshSessions.map((s) => s.id)) + 1 : 1,
+    id: db.refreshSessions.length
+      ? Math.max(...db.refreshSessions.map((s) => s.id)) + 1
+      : 1,
     userId,
     token: refreshToken,
     createdAt: Date.now(),
@@ -81,12 +105,12 @@ export function saveRefreshSession(userId, refreshToken) {
   saveDb(db)
 }
 
-export function findRefreshSession(token) {
+export function findRefreshSession(token: string): MockRefreshSession | null {
   const db = loadDb()
   return db.refreshSessions.find((s) => s.token === token && !s.revoked) || null
 }
 
-export function revokeRefreshSession(token) {
+export function revokeRefreshSession(token: string) {
   const db = loadDb()
   const row = db.refreshSessions.find((s) => s.token === token)
   if (row) {
@@ -96,8 +120,11 @@ export function revokeRefreshSession(token) {
   }
 }
 
-/** Revoke old refresh token and persist the new one (rotation). */
-export function rotateRefreshSession(oldToken, newRefreshToken, userId) {
+export function rotateRefreshSession(
+  oldToken: string,
+  newRefreshToken: string,
+  userId: number,
+) {
   revokeRefreshSession(oldToken)
   saveRefreshSession(userId, newRefreshToken)
 }

@@ -24,13 +24,13 @@
             <div class="item-actions">
               <button
                 class="action-btn"
-                @click.stop="dialogEdit.openDialog(conversation.id, 'edit')"
+                @click.stop="dialogEdit?.openDialog(conversation.id, 'edit')"
               >
                 <img src="@/assets/photo/编辑.png" alt="编辑" />
               </button>
               <button
                 class="action-btn"
-                @click.stop="dialogEdit.openDialog(conversation.id, 'delete')"
+                @click.stop="dialogEdit?.openDialog(conversation.id, 'delete')"
               >
                 <img src="@/assets/photo/删除.png" alt="删除" />
               </button>
@@ -50,7 +50,7 @@
             <h1 class="chat-title">{{ formatTitle(currentTitle) }}</h1>
             <button
               class="edit-btn"
-              @click="dialogEdit.openDialog(chatStore.currentConversationId, 'edit')"
+              @click="dialogEdit?.openDialog(chatStore.currentConversationId, 'edit')"
             >
               <img src="@/assets/photo/编辑.png" alt="编辑" />
             </button>
@@ -62,7 +62,7 @@
             <button type="button" class="logout-btn" @click="handleLogout">退出</button>
           </el-tooltip>
           <el-tooltip content="设置" placement="top">
-            <button class="action-btn" @click="settingDrawer.openDrawer()">
+            <button class="action-btn" @click="settingDrawer?.openDrawer()">
               <img src="@/assets/photo/设置.png" alt="设置" />
             </button>
           </el-tooltip>
@@ -110,35 +110,39 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch, nextTick, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { Plus } from '@element-plus/icons-vue'
 
-// 组件引入
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import SettingsPanel from '@/components/SettingsPanel.vue'
 import DialogEdit from '@/components/chat/DialogEdit.vue'
 
-// 状态管理
 import { useChatStore } from '@/stores/chat'
 import { useSettingStore } from '@/stores/setting'
 import { useAuthStore } from '@/stores/auth'
 
-// 工具函数
-import { messageHandler } from '@/lib/messageHandler'
+import { messageHandler, type NormalResponse } from '@/lib/messageHandler'
 import { createChatCompletion } from '@/lib/api'
 import { debounce } from '@/lib/debounce'
+import type { ChatAttachment } from '@/types/chat'
 
-// 状态与实例
+export interface SendPayload {
+  text: string
+  files: ChatAttachment[]
+}
+
 const chatStore = useChatStore()
 const settingStore = useSettingStore()
+const { settings } = storeToRefs(settingStore)
 const authStore = useAuthStore()
 const router = useRouter()
-const messagesContainer = ref(null)
-const settingDrawer = ref(null)
-const dialogEdit = ref(null)
+const messagesContainer = ref<HTMLElement | null>(null)
+const settingDrawer = ref<InstanceType<typeof SettingsPanel> | null>(null)
+const dialogEdit = ref<InstanceType<typeof DialogEdit> | null>(null)
 
 // 计算属性
 const currentMessages = computed(() => chatStore.currentMessages)
@@ -173,11 +177,11 @@ const handleNewChat = () => {
   chatStore.createConversation()
 }
 
-const handleSwitchChat = (conversationId) => {
+const handleSwitchChat = (conversationId: string) => {
   chatStore.switchConversation(conversationId)
 }
 
-const debounceHandleSend = debounce(async (messageContent) => {
+const debounceHandleSend = debounce(async (messageContent: SendPayload) => {
   try {
     //记录开始时间
     const startTime = Date.now()
@@ -192,7 +196,7 @@ const debounceHandleSend = debounce(async (messageContent) => {
     // 设置加载状态
     chatStore.setIsLoading(true)
     const lastMessage = chatStore.getLastMessage()
-    lastMessage.loading = true
+    if (lastMessage) lastMessage.loading = true
 
     // 调用API获取回复
     const messages = chatStore.currentMessages.map(({ role, content }) => ({ role, content }))
@@ -204,25 +208,25 @@ const debounceHandleSend = debounce(async (messageContent) => {
 
     // 处理流式/非流式响应
     await messageHandler.handleResponse(
-      response,
-      settingStore.settings.stream,
+      response as Response | NormalResponse,
+      settings.value.stream,
       (content, reasoning_content, tokens, speed) => {
         chatStore.updateLastMessage(content, reasoning_content, tokens, speed)
       }
     )
   } catch (error) {
     console.error('发送消息失败:', error)
-    chatStore.updateLastMessage('抱歉，发生了一些错误，请稍后重试。')
+    chatStore.updateLastMessage('抱歉，发生了一些错误，请稍后重试。', '', 0, '0')
   } finally {
     // 重置加载状态
     chatStore.setIsLoading(false)
     const lastMessage = chatStore.getLastMessage()
-    lastMessage.loading = false
+    if (lastMessage) lastMessage.loading = false
   }
 },100)
 
 
-const handleSend = (messagesContent) => {
+const handleSend = (messagesContent: SendPayload) => {
   if(chatStore.isLoading)
     return
   debounceHandleSend(messagesContent)
@@ -246,7 +250,7 @@ const handleRegenerate = () => {
 }
 
 // 辅助函数
-const formatTitle = (title) => {
+const formatTitle = (title: string) => {
   return title.length > 15 ? title.slice(0, 15) + '...' : title
 }
 

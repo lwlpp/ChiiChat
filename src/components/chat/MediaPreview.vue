@@ -189,59 +189,42 @@
   </div>
 </template>
 
-<script setup>
-import { ref, watch, computed, onUnmounted } from 'vue'
+<script setup lang="ts">
+import { ref, watch, computed, onUnmounted, withDefaults } from 'vue'
 import { Close, Document, Loading, Warning } from '@element-plus/icons-vue'
 import VueOfficeDocx from '@vue-office/docx/lib/v3/index.js'
 import VueOfficeExcel from '@vue-office/excel/lib/v3/index.js'
 import VueOfficePptx from '@vue-office/pptx/lib/v3/index.js'
 
-
-
-// 状态管理
 const officeLoading = ref(false)
 const officeError = ref('')
 const pdfIframeLoading = ref(false)
 const pdfIframeError = ref(false)
-let loadingFallbackTimer = null
-let pdfIframeLoadTimer = null
+let loadingFallbackTimer: ReturnType<typeof setTimeout> | null = null
+let pdfIframeLoadTimer: ReturnType<typeof setTimeout> | null = null
 
-const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false
+const props = withDefaults(
+  defineProps<{
+    visible?: boolean
+    previewKey?: number
+    fileUrl?: string
+    binaryPreview?: ArrayBuffer | null
+    fileName?: string
+    fileSize?: number
+    fileType?: string
+    textContent?: string
+  }>(),
+  {
+    visible: false,
+    previewKey: 0,
+    fileUrl: '',
+    binaryPreview: null,
+    fileName: '',
+    fileSize: 0,
+    fileType: '',
+    textContent: '',
   },
-  /** 每次打开预览递增，用于强制 vue-office 重新挂载 */
-  previewKey: {
-    type: Number,
-    default: 0
-  },
-  fileUrl: {
-    type: String,
-    default: ''
-  },
-  /** 本地文件应用 ArrayBuffer 传给 vue-office（blob URL 不可靠） */
-  binaryPreview: {
-    type: Object,
-    default: null
-  },
-  fileName: {
-    type: String,
-    default: ''
-  },
-  fileSize: {
-    type: Number,
-    default: 0
-  },
-  fileType: {
-    type: String,
-    default: ''
-  },
-  textContent: {
-    type: String,
-    default: ''
-  }
-})
+)
 
 const documentSrc = computed(() => {
   const buf = props.binaryPreview
@@ -255,10 +238,12 @@ const pdfIframeSrc = computed(() => {
   return props.fileUrl
 })
 
-const isDocxFile = (name) => (name.split('.').pop() || '').toLowerCase() === 'docx'
-const isPptxFile = (name) => (name.split('.').pop() || '').toLowerCase() === 'pptx'
+const isDocxFile = (name: string) => (name.split('.').pop() || '').toLowerCase() === 'docx'
+const isPptxFile = (name: string) => (name.split('.').pop() || '').toLowerCase() === 'pptx'
 
-const emit = defineEmits(['close'])
+const emit = defineEmits<{
+  close: []
+}>()
 
 // 关闭预览
 const closePreview = () => {
@@ -266,7 +251,7 @@ const closePreview = () => {
 }
 
 // 格式化文件大小
-const formatFileSize = (bytes) => {
+const formatFileSize = (bytes: number) => {
   if (bytes === 0) return '0 B'
   const k = 1024
   const sizes = ['B', 'KB', 'MB', 'GB']
@@ -275,9 +260,9 @@ const formatFileSize = (bytes) => {
 }
 
 // 获取Office文件类型
-const getOfficeType = (fileName) => {
-  const ext = fileName.split('.').pop()?.toLowerCase()
-  const typeMap = {
+const getOfficeType = (fileName: string) => {
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? ''
+  const typeMap: Record<string, string> = {
     'doc': 'Word文档',
     'docx': 'Word文档',
     'xls': 'Excel表格',
@@ -323,7 +308,7 @@ const onPdfIframeLoad = () => {
 }
 
 // Office文档渲染失败
-const onOfficeError = (error) => {
+const onOfficeError = (error: unknown) => {
   console.error('Office文档渲染失败:', error)
   officeLoading.value = false
   const msg =

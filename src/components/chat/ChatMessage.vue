@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { renderMarkdown } from '@/lib/markdown'
 import { Document, ArrowDown } from '@element-plus/icons-vue'
-// 导入图片资源
+import type { ChatMessage as ChatMessageModel } from '@/types/chat'
 import copyIcon from '@/assets/photo/复制.png'
 import successIcon from '@/assets/photo/成功.png'
 import likeIcon from '@/assets/photo/赞.png'
@@ -12,43 +12,30 @@ import dislikeActiveIcon from '@/assets/photo/踩2.png'
 import regenerateIcon from '@/assets/photo/重新生成.png'
 import thinkingIcon from '@/assets/photo/深度思考.png'
 
-// 定义props
-const props = defineProps({
-  message: {
-    type: Object,
-    required: true,
-  },
-  isLastAssistantMessage: {
-    type: Boolean,
-    default: false,
-  },
-})
+const props = defineProps<{
+  message: ChatMessageModel
+  isLastAssistantMessage?: boolean
+}>()
 
-// 点赞和踩的状态
 const isLiked = ref(false)
 const isDisliked = ref(false)
-
-// 添加复制状态
 const isCopied = ref(false)
 
-// 添加重新生成的事件
-const emit = defineEmits(['regenerate'])
+const emit = defineEmits<{
+  regenerate: []
+}>()
 
-// 添加展开/折叠状态控制
 const isReasoningExpanded = ref(true)
 
-// 切换展开/折叠状态
 const toggleReasoning = () => {
   isReasoningExpanded.value = !isReasoningExpanded.value
 }
 
-// 处理复制函数
 const handleCopy = async () => {
   try {
     await navigator.clipboard.writeText(props.message.content)
     isCopied.value = true
 
-    // 1.5秒后恢复原始图标
     setTimeout(() => {
       isCopied.value = false
     }, 2500)
@@ -57,58 +44,47 @@ const handleCopy = async () => {
   }
 }
 
-// 处理点赞
 const handleLike = () => {
   if (isDisliked.value) isDisliked.value = false
   isLiked.value = !isLiked.value
 }
 
-// 处理踩
 const handleDislike = () => {
   if (isLiked.value) isLiked.value = false
   isDisliked.value = !isDisliked.value
 }
 
-// 添加重新生成的事件
 const handleRegenerate = () => {
   emit('regenerate')
 }
 
-// 处理代码块的复制
-const handleCodeCopy = async (event) => {
-  const codeBlock = event.target.closest('.code-block')
-  const code = codeBlock.querySelector('code').textContent
+const handleCodeCopy = async (event: Event) => {
+  const target = event.target as HTMLElement
+  const codeBlock = target.closest('.code-block')
+  const codeEl = codeBlock?.querySelector('code')
+  const code = codeEl?.textContent
+  if (!code) return
 
   try {
     await navigator.clipboard.writeText(code)
-    // 可以添加复制成功的提示
   } catch (err) {
     console.error('复制失败:', err)
   }
 }
 
-// 处理代码块主题切换
-const handleThemeToggle = (event) => {
-  // 确保我们获取到正确的元素
-  const codeBlock = event.target.closest('.code-block')
-  // 修改获取图标元素的方式
-  const themeBtn = event.target.closest('[data-action="theme"]')
-  const themeIcon = themeBtn.querySelector('img')
+const handleThemeToggle = (event: Event) => {
+  const target = event.target as HTMLElement
+  const codeBlock = target.closest('.code-block')
+  const themeBtn = target.closest('[data-action="theme"]') as HTMLElement | null
+  const themeIcon = themeBtn?.querySelector('img') as HTMLImageElement | null
+  if (!codeBlock || !themeIcon) return
+
   const lightIcon = themeIcon.dataset.lightIcon
   const darkIcon = themeIcon.dataset.darkIcon
-
-  // 添加调试日志
-  // console.log('切换主题', {
-  //   codeBlock,
-  //   themeIcon,
-  //   lightIcon,
-  //   darkIcon,
-  //   isDark: codeBlock.classList.contains('dark-theme'),
-  // })
+  if (!lightIcon || !darkIcon) return
 
   codeBlock.classList.toggle('dark-theme')
 
-  // 切换图标
   themeIcon.src = codeBlock.classList.contains('dark-theme') ? lightIcon : darkIcon
 }
 

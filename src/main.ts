@@ -11,9 +11,6 @@ import 'animate.css'
 import '@vue-office/docx/lib/v3/style.css'
 import '@vue-office/excel/lib/v3/style.css'
 
-
-
-
 const app = createApp(App)
 
 app.use(createPinia().use(persist))

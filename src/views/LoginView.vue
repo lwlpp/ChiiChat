@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { User } from '@element-plus/icons-vue'
@@ -23,8 +23,8 @@ const submit = async () => {
     })
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/chat'
     await router.replace(redirect || '/chat')
-  } catch (e) {
-    errorMsg.value = e.message || '登录失败'
+  } catch (e: unknown) {
+    errorMsg.value = e instanceof Error ? e.message : '登录失败'
   } finally {
     loading.value = false
   }

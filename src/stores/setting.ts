@@ -1,10 +1,20 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+export interface LlmSettings {
+  model: string
+  apiKey: string
+  stream: boolean
+  maxTokens: number
+  temperature: number
+  topP: number
+  topK: number
+}
+
 export const useSettingStore = defineStore(
   'llm-setting',
   () => {
-    const settings = ref({
+    const settings = ref<LlmSettings>({
       model: 'deepseek-ai/DeepSeek-R1',
       apiKey: '',
       stream: true,
@@ -23,7 +33,13 @@ export const useSettingStore = defineStore(
   },
 )
 
-export const modelOptions = [
+export interface ModelOption {
+  label: string
+  value: string
+  maxTokens: number
+}
+
+export const modelOptions: ModelOption[] = [
   {
     label: 'DeepSeek-R1',
     value: 'deepseek-ai/DeepSeek-R1',

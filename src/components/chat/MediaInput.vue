@@ -62,26 +62,41 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref, computed, withDefaults } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Picture, Document, Close, VideoPlay } from '@element-plus/icons-vue'
 import MediaPreview from './MediaPreview.vue'
 
-const props = defineProps({
-  maxFiles: {
-    type: Number,
-    default: 5
-  },
-  maxSize: {
-    type: Number,
-    default: 100 * 1024 * 1024 // 100MB
-  }
-})
+export interface MediaFileItem {
+  id: number
+  name: string
+  size: number
+  type: string
+  file: File
+  uploading: boolean
+  progress: number
+  url: string
+}
 
-const emit = defineEmits(['upload-success', 'upload-error'])
+const props = withDefaults(
+  defineProps<{
+    maxFiles?: number
+    maxSize?: number
+  }>(),
+  {
+    maxFiles: 5,
+    maxSize: 100 * 1024 * 1024,
+  },
+)
+
+const emit = defineEmits<{
+  'upload-success': [payload: { file: MediaFileItem }]
+  'upload-error': [payload: { file: MediaFileItem; error: unknown }]
+}>()
 
 // 文件输入引用
-const fileInput = ref(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // 支持的文件类型
 const acceptedTypes = computed(() => {
@@ -100,13 +115,13 @@ const acceptedTypes = computed(() => {
 })
 
 // 文件列表
-const fileList = ref([])
+const fileList = ref<MediaFileItem[]>([])
 
 // 预览相关状态
 const previewVisible = ref(false)
 const previewKey = ref(0)
 const previewFileUrl = ref('')
-const previewBinary = ref(null)
+const previewBinary = ref<ArrayBuffer | null>(null)
 const previewFileName = ref('')
 const previewFileSize = ref(0)
 const previewFileType = ref('')
@@ -118,14 +133,15 @@ const triggerFileInput = () => {
 }
 
 // 处理文件选择
-const handleFileSelect = (event) => {
-  const files = Array.from(event.target.files || [])
+const handleFileSelect = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files || [])
   appendFiles(files)
-  event.target.value = ''
+  input.value = ''
 }
 
 // 添加文件
-const appendFiles = (files) => {
+const appendFiles = (files: File[]) => {
   for (const file of files) {
     if (fileList.value.length >= props.maxFiles) {
       ElMessage.warning(`最多只能上传${props.maxFiles}个文件`)
@@ -156,7 +172,7 @@ const appendFiles = (files) => {
 }
 
 // 模拟上传过程
-const simulateUpload = async (index) => {
+const simulateUpload = async (index: number) => {
   const fileItem = fileList.value[index]
   if (!fileItem) return
 
@@ -182,7 +198,7 @@ const simulateUpload = async (index) => {
 }
 
 // 预览文件
-const previewFile = async (file) => {
+const previewFile = async (file: MediaFileItem) => {
   if (file.uploading) return
 
   previewVisible.value = false
@@ -221,33 +237,37 @@ const previewFile = async (file) => {
 }
 
 // 读取文本文件内容
-const readTextFile = (file) => {
-  return new Promise((resolve, reject) => {
+const readTextFile = (file: File) => {
+  return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = (e) => resolve(e.target.result)
+    reader.onload = (e) => resolve(String(e.target?.result ?? ''))
     reader.onerror = (e) => reject(e)
     reader.readAsText(file, 'UTF-8')
   })
 }
 
-const readFileAsArrayBuffer = (file) => {
-  return new Promise((resolve, reject) => {
+const readFileAsArrayBuffer = (file: File) => {
+  return new Promise<ArrayBuffer>((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = (e) => resolve(e.target.result)
+    reader.onload = (e) => {
+      const r = e.target?.result
+      if (r instanceof ArrayBuffer) resolve(r)
+      else reject(new Error('not array buffer'))
+    }
     reader.onerror = () => reject(new Error('read failed'))
     reader.readAsArrayBuffer(file)
   })
 }
 
 // 获取文件类型
-const getFileType = (mimeType, fileName) => {
+const getFileType = (mimeType: string, fileName: string) => {
   if (mimeType.startsWith('image/')) return 'image'
   if (mimeType.startsWith('video/')) return 'video'
   if (mimeType === 'application/pdf') return 'pdf'
   if (mimeType.startsWith('text/')) return 'text'
 
   // 检查Office文档
-  const ext = fileName.split('.').pop()?.toLowerCase()
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? ''
   const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']
   if (officeExts.includes(ext)) return 'office'
 
@@ -261,7 +281,7 @@ const closePreview = () => {
 }
 
 // 移除文件
-const removeFile = (index) => {
+const removeFile = (index: number) => {
   const file = fileList.value[index]
   if (file.url && file.url.startsWith('blob:')) {
     URL.revokeObjectURL(file.url)
@@ -270,7 +290,7 @@ const removeFile = (index) => {
 }
 
 // 格式化文件大小
-const formatFileSize = (bytes) => {
+const formatFileSize = (bytes: number) => {
   if (bytes === 0) return '0 B'
   const k = 1024
   const sizes = ['B', 'KB', 'MB', 'GB']
